@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.thymeleaf.spring6.context.webflux.ReactiveDataDriverContextVariable;
 
 import com.bolsadeideas.springboot.webflux.app.models.documents.Producto;
@@ -16,8 +17,10 @@ import com.bolsadeideas.springboot.webflux.app.models.services.ProductoService;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.SessionAttributes;
+import org.springframework.web.bind.support.SessionStatus;
 
+@SessionAttributes("producto")
 @Controller
 public class ProductoController {
 
@@ -43,8 +46,20 @@ public class ProductoController {
         return Mono.just("form");
     }
 
+    @GetMapping("/form/{id}")
+    public Mono<String> editar(@PathVariable String id, Model model) {
+        Mono<Producto> producto = productoService.findById(id)
+                .doOnNext(prod -> log.info(prod.getNombre()))
+                .defaultIfEmpty(new Producto());
+
+        model.addAttribute("producto", producto);
+        model.addAttribute("titulo", "Editar Producto");
+        return Mono.just("form");
+    }
+
     @PostMapping("/form")
-    public Mono<String> guardar(Producto product) {
+    public Mono<String> guardar(Producto product, SessionStatus sessionStatus) {
+        sessionStatus.setComplete();
         return productoService.save(product)
                 .doOnNext(prod -> log.info("Producto guardado: " + prod.getNombre()))
                 .thenReturn("redirect:/listar");
