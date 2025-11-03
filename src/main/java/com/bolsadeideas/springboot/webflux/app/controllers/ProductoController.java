@@ -14,6 +14,9 @@ import com.bolsadeideas.springboot.webflux.app.models.documents.Producto;
 import com.bolsadeideas.springboot.webflux.app.models.services.ProductoService;
 
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @Controller
 public class ProductoController {
@@ -31,6 +34,20 @@ public class ProductoController {
         model.addAttribute("productos", productos);
         model.addAttribute("titulo", "Listado de Productos");
         return "listar";
+    }
+
+    @GetMapping("/form")
+    public Mono<String> crear(Model model) {
+        model.addAttribute("producto", new Producto());
+        model.addAttribute("titulo", "Formulario de Producto");
+        return Mono.just("form");
+    }
+
+    @PostMapping("/form")
+    public Mono<String> guardar(Producto product) {
+        return productoService.save(product)
+                .doOnNext(prod -> log.info("Producto guardado: " + prod.getNombre()))
+                .thenReturn("redirect:/listar");
     }
 
     @GetMapping("/listar-dataDriver")
